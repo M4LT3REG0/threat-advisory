@@ -105,6 +105,9 @@ a{color:var(--accent)}
 .listhead .lh-title{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint)}
 .listhead .lh-title b{color:var(--text);font-variant-numeric:tabular-nums}
 .mlinks{display:flex;gap:8px;flex-wrap:wrap}
+.newtag{font-family:var(--mono);font-size:9px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;color:#fff;background:#d81b46;border-radius:5px;padding:2px 7px;white-space:nowrap;display:inline-flex;align-items:center;line-height:1.5}
+.newribbon{position:absolute;top:-7px;left:12px;z-index:2;box-shadow:0 3px 8px rgba(216,27,70,.4)}
+.list .row{position:relative;overflow:visible}
 .list{display:flex;flex-direction:column;gap:8px;margin-top:14px;padding-bottom:40px}
 .row{display:grid;grid-template-columns:96px 1fr auto;gap:14px;align-items:start;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 15px;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%;transition:border-color .12s,transform .12s;border-left-width:1px}
 .row:hover{border-color:var(--accent-line);transform:translateY(-1px)}
@@ -364,6 +367,9 @@ const cleanDom=d=>(d||'').replace(/^https?:\/\//,'').split(/[ \/]/)[0];
 const FEED=new Set(Object.keys(DB.groups).map(norm2));
 const ANALYSIS_SLUGS=new Set(Object.keys(DB.analyses||{}).map(norm2));
 const ACTORS_BY_SLUG={};(DB.actors_dir||[]).forEach(a=>{ACTORS_BY_SLUG[a.slug]=a;});
+const NEW_DAYS=30;
+const isNewActor=a=>{if(!a||!a.added)return false;const t=new Date(a.added+'T00:00:00Z').getTime();return !isNaN(t)&&(Date.now()-t)<NEW_DAYS*86400000;};
+const isNewSlug=slug=>isNewActor(ACTORS_BY_SLUG[slug]);
 const TABS=[
   {id:'feed',label:'Incidentes',icon:'feed',n:DB.incidents.length},
   {id:'actors',label:'Actores',icon:'actors',n:DB.actors_dir?DB.actors_dir.length:0},
@@ -519,6 +525,7 @@ function Modal({it,onClose}){const [k,copy]=useCopy();
   return (<div className="ov" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
     <div className="mhead"><div className="vt">
         <div className="grpline" style={{marginBottom:6,marginTop:0}}><span className="grp"><Gdot g={it.group}/>{it.group}</span><OnPill g={it.group}/>
+          {isNewSlug(norm2(it.group))&&<span className="newtag">NEW GROUP</span>}
           {it.country&&<span className="rc-flag" style={{fontSize:14}} title={it.country}>{flag(it.country)}</span>}
           {it.activity&&<span className="chip c-mut">{it.activity}</span>}
           <span className="mono" style={{color:'var(--faint)',fontSize:11}}>{it.date} UTC</span></div>
@@ -750,27 +757,29 @@ function TTPs({ttps}){if(!ttps||!ttps.length)return null;
         :<span key={j} className="ttchip nolink">{t.technique}</span>)}</div>
     </div>))}</div>);
 }
-function ActorsView(){const [q,setQ]=useState('');
+function ActorsView(){const [q,setQ]=useState('');const [onlyNew,setOnlyNew]=useState(false);
   const dir=DB.actors_dir||[];const ql=q.toLowerCase();
   const vcount=slug=>(DB.actor_victims&&DB.actor_victims[slug])?DB.actor_victims[slug].length:0;
-  const rows=dir.filter(a=>!q||(a.name+' '+(a.description||'')+' '+(a.ttps||[]).map(t=>t.technique+' '+t.tactic).join(' ')).toLowerCase().includes(ql))
+  const newCount=dir.filter(isNewActor).length;
+  const rows=dir.filter(a=>(!onlyNew||isNewActor(a))&&(!q||(a.name+' '+(a.description||'')+' '+(a.ttps||[]).map(t=>t.technique+' '+t.tactic).join(' ')).toLowerCase().includes(ql)))
     .slice().sort((a,b)=>vcount(b.slug)-vcount(a.slug)||a.name.localeCompare(b.name));
   return (<>
     <div className="panel" style={{marginTop:14}}>
       <div className="wl-head"><h2 style={{margin:0}}>Directorio de actores &middot; ransomware.live</h2>
-        <span className="pulse"><span className="dotlive"></span>{dir.length} registrados</span></div>
+        <div className="seg"><button className={onlyNew?'':'act'} onClick={()=>setOnlyNew(false)}>Todos</button><button className={onlyNew?'act':''} onClick={()=>setOnlyNew(true)}>NEW GROUP {newCount}</button></div></div>
       <div className="addbox" style={{marginTop:12}}>
         <svg viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
         <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar actor, descripcion o TTP..." aria-label="Buscar actor"/>
         {q&&<button className="clr" onClick={()=>setQ('')}>limpiar</button>}
       </div>
-      <div className="wl-foot"><span><b>{rows.length}</b> de {dir.length} actores registrados &middot; {ANALYSIS_SLUGS.size} con ficha CTI propia</span></div>
+      <div className="wl-foot"><span><b>{rows.length}</b> de {dir.length} actores &middot; <b>{newCount}</b> nuevos (ult. {NEW_DAYS}d) &middot; {ANALYSIS_SLUGS.size} con ficha CTI propia</span></div>
     </div>
     <div className="libwrap">
       {dir.length===0&&<div className="empty"><div>El directorio se rellena en el primer refresco del collector (en el despliegue).</div></div>}
       {rows.map(a=>{const vc=vcount(a.slug);const rep=ANALYSIS_SLUGS.has(a.slug);
         return (<details className="vgrp" key={a.slug} {...(q?{open:true}:{})}>
           <summary><Gdot g={a.name}/>{a.name}
+            {isNewActor(a)&&<span className="newtag">NEW GROUP</span>}
             {vc>0&&<span className="cnt">{vc} victimas</span>}
             {rep&&<span className="chip c-acc" style={{padding:'1px 6px'}}>ficha CTI</span>}
             {a.onion&&<span className="chip c-green" style={{padding:'1px 6px'}}>onion activo</span>}
@@ -901,6 +910,7 @@ function App(){
         </div>}
         {rows.map(({it,hit,terms},i)=>{const fl=flagsFor(it);
           return (<button className={"row"+(hit?" hit":"")} key={i} onClick={()=>setSel(it)}>
+            {isNewSlug(norm2(it.group))&&<span className="newtag newribbon">NEW GROUP</span>}
             <div className="when"><span className="rel">{relTime(it.date)}</span>{it.date.slice(5,16)}</div>
             <div className="mid">
               <div className="vic">{it.victim}</div>
