@@ -262,6 +262,12 @@ a{color:var(--accent)}
 .ad-desc{font-size:12.5px;line-height:1.5;color:var(--text)}
 .ad-lbl{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin:12px 0 6px}
 .ttchips{display:flex;gap:5px;flex-wrap:wrap}
+.ttps{display:flex;flex-direction:column;gap:9px}
+.ttgrp .tt-tac{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);margin-bottom:4px}
+.ttchip{font-family:var(--mono);font-size:11px;text-decoration:none;border:1px solid var(--border);background:var(--surface-2);color:var(--text);border-radius:6px;padding:3px 8px;display:inline-flex;gap:5px;align-items:baseline}
+.ttchip b{color:var(--accent);font-weight:600}
+.ttchip:hover{border-color:var(--accent-line)}
+.ttchip.nolink{color:var(--muted)}
 /* ransom notes */
 .notecard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
 .notecard .nc-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:8px}
@@ -357,6 +363,7 @@ const flag=cc=>(cc&&cc.length===2)?cc.replace(/./g,c=>String.fromCodePoint(12739
 const cleanDom=d=>(d||'').replace(/^https?:\/\//,'').split(/[ \/]/)[0];
 const FEED=new Set(Object.keys(DB.groups).map(norm2));
 const ANALYSIS_SLUGS=new Set(Object.keys(DB.analyses||{}).map(norm2));
+const ACTORS_BY_SLUG={};(DB.actors_dir||[]).forEach(a=>{ACTORS_BY_SLUG[a.slug]=a;});
 const TABS=[
   {id:'feed',label:'Incidentes',icon:'feed',n:DB.incidents.length},
   {id:'actors',label:'Actores',icon:'actors',n:DB.actors_dir?DB.actors_dir.length:0},
@@ -529,6 +536,10 @@ function Modal({it,onClose}){const [k,copy]=useCopy();
         <ActorVictims group={it.group}/>
         <a className="mlink" href={"https://www.ransomware.live/group/"+norm2(it.group)} target="_blank" rel="noopener noreferrer" style={{marginTop:10}}>
           <svg viewBox="0 0 24 24"><path d="M14 5h5v5M19 5l-9 9M11 5H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>Historico completo de {it.group} en ransomware.live</a></div>
+      {(ACTORS_BY_SLUG[norm2(it.group)]&&ACTORS_BY_SLUG[norm2(it.group)].ttps&&ACTORS_BY_SLUG[norm2(it.group)].ttps.length>0)&&
+        <div className="sec"><div className="lbl">TTPs MITRE ATT&amp;CK &middot; {ACTORS_BY_SLUG[norm2(it.group)].ttps.length}</div>
+          <TTPs ttps={ACTORS_BY_SLUG[norm2(it.group)].ttps}/>
+          <div className="note" style={{marginTop:6}}>Atribucion de ransomware.live. Cada tecnica enlaza a attack.mitre.org.</div></div>}
       {cvesFor(it.group).length>0&&<div className="sec"><div className="lbl">Vulnerabilidades explotadas (CVE) &middot; {cvesFor(it.group).length}</div>
         <div className="cvelist">{cvesFor(it.group).map((v,i)=>(<div className="cverow" key={i}>
           <a className="mono cveid" href={"https://nvd.nist.gov/vuln/detail/"+v.cve} target="_blank" rel="noopener noreferrer">{v.cve}</a>
@@ -729,6 +740,16 @@ function VulnsView(){const [q,setQ]=useState('');const [mode,setMode]=useState('
   </>);
 }
 
+function TTPs({ttps}){if(!ttps||!ttps.length)return null;
+  const by={};ttps.forEach(t=>{const k=t.tactic||'Otras';(by[k]=by[k]||[]).push(t);});
+  const mid=id=>"https://attack.mitre.org/techniques/"+id.replace('.','/')+"/";
+  return (<div className="ttps">{Object.entries(by).map(([tac,list],i)=>(
+    <div className="ttgrp" key={i}><div className="tt-tac">{tac}</div>
+      <div className="ttchips">{list.map((t,j)=>t.id
+        ?<a key={j} className="ttchip" href={mid(t.id)} target="_blank" rel="noopener noreferrer" title={t.technique}><b>{t.id}</b>{t.technique?' '+t.technique:''}</a>
+        :<span key={j} className="ttchip nolink">{t.technique}</span>)}</div>
+    </div>))}</div>);
+}
 function ActorsView(){const [q,setQ]=useState('');
   const dir=DB.actors_dir||[];const ql=q.toLowerCase();
   const vcount=slug=>(DB.actor_victims&&DB.actor_victims[slug])?DB.actor_victims[slug].length:0;
@@ -756,8 +777,8 @@ function ActorsView(){const [q,setQ]=useState('');
             <svg className="caret" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6"/></svg></summary>
           <div className="adbody">
             {a.description?<div className="ad-desc">{a.description}</div>:<div className="note">Sin descripcion publicada en ransomware.live.</div>}
-            {a.ttps&&a.ttps.length>0&&<><div className="ad-lbl">TTPs ({a.ttps.length})</div>
-              <div className="ttchips">{a.ttps.map((t,i)=><span key={i} className="chip c-mut" title={t.tactic}>{t.technique||t.tactic}</span>)}</div></>}
+            {a.ttps&&a.ttps.length>0&&<><div className="ad-lbl">TTPs MITRE ATT&amp;CK ({a.ttps.length})</div>
+              <TTPs ttps={a.ttps}/></>}
             {vc>0&&<div className="note" style={{marginTop:8}}>{vc} victimas registradas &middot; abre su ficha desde un incidente para el listado.</div>}
             {rep&&<div className="note" style={{marginTop:6}}>Este actor tiene <b>ficha CTI propia</b>: abrela desde cualquiera de sus incidentes en el feed.</div>}
             <a className="mlink" href={a.url} target="_blank" rel="noopener noreferrer" style={{marginTop:10}}>
