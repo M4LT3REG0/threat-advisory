@@ -32,7 +32,7 @@ RL_RECENT_N   = 150
 RWL_MAX       = 250
 
 # Historico por actor (ransomware.live groupvictims)
-GV_CAP        = 400   # victimas maximas embebidas por actor
+GV_CAP        = 200   # victimas maximas embebidas por actor
 GV_MAX_GROUPS = 80    # cuantos actores del feed traer (los mas activos)
 
 
@@ -133,6 +133,34 @@ def fetch_group_victims(group, cap=GV_CAP):
     return out[:cap]
 
 
+def fetch_groups():
+    """Directorio completo de grupos registrados en ransomware.live (/v2/groups)."""
+    data = _get(f"{RWLIVE}/v2/groups")
+    out = []
+    for g in data:
+        name = (g.get("name") or "").strip()
+        if not name:
+            continue
+        ttps = []
+        for t in (g.get("ttps") or []):
+            if isinstance(t, dict):
+                ttps.append({"tactic": (t.get("tactic") or "").strip(),
+                             "technique": (t.get("technique") or "").strip()})
+        onion = any(loc.get("available") for loc in (g.get("locations") or [])
+                    if isinstance(loc, dict))
+        out.append({
+            "slug": _gn(name),
+            "name": name,
+            "description": (g.get("description") or "").strip(),
+            "ttps": ttps,
+            "onion": onion,
+            "added": (g.get("added_date") or "")[:10],
+            "url": g.get("url") or ("https://www.ransomware.live/group/" + _gn(name)),
+        })
+    out.sort(key=lambda x: x["name"].lower())
+    return out
+
+
 def merge_incidents(rl, rwl, groups):
     canon = {_gn(k): k for k in groups}          # rwlive group -> nombre canonico RansomLook
     RWL_URL = "https://www.ransomware.live/group/"
@@ -215,6 +243,15 @@ def build():
                   f"{sum(len(x) for x in av.values())} victimas")
     except Exception as e:
         print(f"[collector] fallo actor_victims, mantengo cache: {e}")
+
+    # Directorio COMPLETO de actores registrados en ransomware.live (~127).
+    try:
+        dirs = fetch_groups()
+        if dirs:
+            base["actors_dir"] = dirs
+            print(f"[collector] actors_dir: {len(dirs)} grupos registrados")
+    except Exception as e:
+        print(f"[collector] fallo actors_dir, mantengo cache: {e}")
 
     # HOOKS para automatizar mas secciones (opcional): ver README.
 
