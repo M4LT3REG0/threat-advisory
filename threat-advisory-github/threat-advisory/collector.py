@@ -133,6 +133,27 @@ def fetch_group_victims(group, cap=GV_CAP):
     return out[:cap]
 
 
+def _parse_ttps(raw):
+    """Aplana las TTP MITRE (soporta estructura anidada tactic/techniques y plana)."""
+    out = []
+    for t in (raw or []):
+        if not isinstance(t, dict):
+            continue
+        tactic = (t.get("tactic_name") or t.get("tactic") or "").strip()
+        techs = t.get("techniques")
+        if isinstance(techs, list):          # anidada: tactic -> [techniques]
+            for te in techs:
+                if isinstance(te, dict):
+                    out.append({"tactic": tactic,
+                                "id": (te.get("technique_id") or "").strip(),
+                                "technique": (te.get("technique_name") or "").strip()})
+        else:                                 # plana
+            out.append({"tactic": tactic,
+                        "id": (t.get("technique_id") or "").strip(),
+                        "technique": (t.get("technique") or t.get("technique_name") or "").strip()})
+    return [t for t in out if t["technique"] or t["id"]]
+
+
 def fetch_groups():
     """Directorio completo de grupos registrados en ransomware.live (/v2/groups)."""
     data = _get(f"{RWLIVE}/v2/groups")
@@ -141,11 +162,7 @@ def fetch_groups():
         name = (g.get("name") or "").strip()
         if not name:
             continue
-        ttps = []
-        for t in (g.get("ttps") or []):
-            if isinstance(t, dict):
-                ttps.append({"tactic": (t.get("tactic") or "").strip(),
-                             "technique": (t.get("technique") or "").strip()})
+        ttps = _parse_ttps(g.get("ttps"))
         onion = any(loc.get("available") for loc in (g.get("locations") or [])
                     if isinstance(loc, dict))
         out.append({
