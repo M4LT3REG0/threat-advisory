@@ -33,3 +33,13 @@ jobs:
       - run: pip install -r requirements.txt
       - name: Refrescar datos
         run: python collector.py
+        continue-on-error: true
+      - name: Construir sitio estatico
+        env:
+          PUBLIC_STRIP: "0"
+        run: python build_site.py
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: threat-advisory-github/threat-advisory/site
+      - id: deploy
+        uses: actions/deploy-pages@v4
