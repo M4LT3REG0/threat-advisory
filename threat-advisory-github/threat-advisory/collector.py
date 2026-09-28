@@ -31,6 +31,10 @@ RWLIVE     = "https://api.ransomware.live"
 RL_RECENT_N   = 150
 RWL_MAX       = 250
 
+# Historico por actor (ransomware.live groupvictims)
+GV_CAP        = 400   # victimas maximas embebidas por actor
+GV_MAX_GROUPS = 80    # cuantos actores del feed traer (los mas activos)
+
 
 def _get(url):
     r = requests.get(url, headers=UA, timeout=TIMEOUT)
@@ -104,6 +108,31 @@ def fetch_rwlive(n=RWL_MAX):
     return out
 
 
+def fetch_group_victims(group, cap=GV_CAP):
+    """Historico de victimas de un grupo (ransomware.live groupvictims)."""
+    slug = group.strip()
+    try:
+        data = _get(f"{RWLIVE}/v2/groupvictims/{slug}")
+    except Exception:
+        data = _get(f"{RWLIVE}/v2/groupvictims/{slug.lower()}")
+    out = []
+    for v in data:
+        victim = (v.get("victim") or v.get("post_title") or "").strip()
+        if not victim:
+            continue
+        out.append({
+            "victim": victim,
+            "country": (v.get("country") or "").strip().upper(),
+            "activity": _clean_activity(v.get("activity")),
+            "discovered": (v.get("discovered") or "")[:19].replace("T", " "),
+            "attackdate": (v.get("attackdate") or "")[:10],
+            "description": _clean_desc(v.get("description")),
+            "domain": (v.get("domain") or "").strip(),
+        })
+    out.sort(key=lambda x: x["discovered"], reverse=True)
+    return out[:cap]
+
+
 def merge_incidents(rl, rwl, groups):
     canon = {_gn(k): k for k in groups}          # rwlive group -> nombre canonico RansomLook
     RWL_URL = "https://www.ransomware.live/group/"
@@ -147,6 +176,7 @@ def build():
         base = json.load(f)
     groups = base.get("groups", {})
 
+    rwl = []
     try:
         rl  = fetch_ransomlook()
         rwl = fetch_rwlive()
@@ -159,10 +189,34 @@ def build():
     except Exception as e:
         print(f"[collector] fallo el refresco de incidentes, mantengo cache: {e}")
 
-    # HOOKS para automatizar el resto (opcional). Ejemplo:
-    #   try: base["vulns"] = fetch_vulns()
-    #   except Exception as e: print("vulns:", e)
-    # Ver README > "Extender el collector".
+    # Historico por actor: para cada grupo que aparece en el feed de
+    # ransomware.live (incluye grupos NUEVOS en cuanto publican) baja su lista
+    # de victimas. Clave = nombre de grupo normalizado.
+    try:
+        seen, order = set(), []
+        for v in rwl:
+            g = (v.get("group") or "").strip()
+            if g and _gn(g) not in seen:
+                seen.add(_gn(g))
+                order.append(g)
+        av = base.get("actor_victims", {}) or {}
+        got = 0
+        for g in order[:GV_MAX_GROUPS]:
+            try:
+                vics = fetch_group_victims(g)
+                if vics:
+                    av[_gn(g)] = vics
+                    got += 1
+            except Exception as e:
+                print(f"[collector] groupvictims {g}: {e}")
+        if av:
+            base["actor_victims"] = av
+            print(f"[collector] actor_victims: {got} grupos, "
+                  f"{sum(len(x) for x in av.values())} victimas")
+    except Exception as e:
+        print(f"[collector] fallo actor_victims, mantengo cache: {e}")
+
+    # HOOKS para automatizar mas secciones (opcional): ver README.
 
     base["generated"] = datetime.date.today().isoformat()
     with open(DATA, "w", encoding="utf-8") as f:
