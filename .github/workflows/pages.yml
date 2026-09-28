@@ -19,6 +19,9 @@ concurrency:
 jobs:
   build-deploy:
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: threat-advisory
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}
@@ -37,6 +40,6 @@ jobs:
         run: python build_site.py
       - uses: actions/upload-pages-artifact@v3
         with:
-          path: site
+          path: threat-advisory/site
       - id: deploy
         uses: actions/deploy-pages@v4
