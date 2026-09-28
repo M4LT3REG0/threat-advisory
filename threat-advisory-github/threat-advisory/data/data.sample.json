@@ -1,0 +1,48 @@
+{
+"generated": "",
+"source": "RansomLook (ransomlook.io) API",
+"window": "",
+"incidents": [],
+"groups": {},
+"analyses": {},
+"library": [],
+"default_targets": [
+"congreso.es",
+"senado.es",
+"ceuta.es",
+"melilla.es",
+"gob.es",
+"ayuntamiento",
+"diputacion",
+"generalitat",
+"junta",
+"ministerio",
+"universidad",
+"sanidad",
+"hospital"
+],
+"crypto_stats": {
+"addresses": 0,
+"transactions": 0,
+"groups": 0,
+"chains": {
+"bitcoin": {
+"addresses": 0,
+"transactions": 0
+},
+"ethereum": {
+"addresses": 0,
+"transactions": 0
+},
+"monero": {
+"addresses": 0,
+"transactions": 0
+}
+}
+},
+"crypto_recent": [],
+"notes": [],
+"torrents": [],
+"raas": [],
+"vulns": []
+}

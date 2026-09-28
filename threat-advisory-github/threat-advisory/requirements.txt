@@ -1,0 +1,8 @@
+Flask>=3.0
+requests>=2.31
+# opcional: refresco automatico en segundo plano
+APScheduler>=3.10
+# opcional: solo si usas opencti_push.py (integracion OpenCTI)
+# pycti>=6.0
+# opcional: para produccion en vez del server de desarrollo de Flask
+# gunicorn>=21.2

@@ -1,0 +1,827 @@
+<title>Threat Advisory</title>
+<meta name="description" content="Threat Advisory (Avisador de amenazas) - feed unificado de victimas de ransomware (RansomLook + ransomware.live) con watchlist, CTI por actor, CVEs y wallets.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+:root{
+  --bg:#eef1f5; --surface:#ffffff; --surface-2:#f5f7fa; --border:#dbe2ea;
+  --text:#131a24; --muted:#5c6875; --faint:#8a97a8;
+  --accent:#0b7ea3; --accent-weak:rgba(11,126,163,.10); --accent-line:rgba(11,126,163,.35);
+  --red:#c22b41; --red-weak:rgba(194,43,65,.10);
+  --amber:#8f6410; --amber-weak:rgba(143,100,16,.12);
+  --green:#1e854a; --green-weak:rgba(30,133,74,.12);
+  --chip:#eaeef3; --shadow:0 1px 2px rgba(16,26,40,.06),0 8px 24px rgba(16,26,40,.08);
+  --sans:"IBM Plex Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,SFMono-Regular,Menlo,monospace;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  color-scheme:dark;
+  --bg:#0b1017; --surface:#121926; --surface-2:#18212e; --border:#25303f;
+  --text:#e6ecf3; --muted:#8b98a9; --faint:#5f6c7c;
+  --accent:#4bc6e8; --accent-weak:rgba(75,198,232,.12); --accent-line:rgba(75,198,232,.30);
+  --red:#ff5d72; --red-weak:rgba(255,93,114,.12);
+  --amber:#e2a53c; --amber-weak:rgba(226,165,60,.13);
+  --green:#47c97a; --green-weak:rgba(71,201,122,.13);
+  --chip:#1a2331; --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --bg:#0b1017; --surface:#121926; --surface-2:#18212e; --border:#25303f;
+  --text:#e6ecf3; --muted:#8b98a9; --faint:#5f6c7c;
+  --accent:#4bc6e8; --accent-weak:rgba(75,198,232,.12); --accent-line:rgba(75,198,232,.30);
+  --red:#ff5d72; --red-weak:rgba(255,93,114,.12);
+  --amber:#e2a53c; --amber-weak:rgba(226,165,60,.13);
+  --green:#47c97a; --green-weak:rgba(71,201,122,.13);
+  --chip:#1a2331; --shadow:0 1px 2px rgba(0,0,0,.4),0 10px 30px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.5;-webkit-font-smoothing:antialiased}
+a{color:var(--accent)}
+.wrap{max-width:1080px;margin:0 auto;padding-inline:16px}
+.top{position:sticky;top:env(safe-area-inset-top,0px);z-index:20;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(10px);border-bottom:1px solid var(--border)}
+.top .wrap{display:flex;align-items:center;gap:14px;padding-block:12px}
+.brand{display:flex;align-items:center;gap:10px;min-width:0}
+.logo{width:30px;height:30px;flex:none;border-radius:7px;background:var(--accent-weak);border:1px solid var(--accent-line);display:grid;place-items:center}
+.logo svg{width:17px;height:17px;stroke:var(--accent)}
+.brand h1{font-size:16px;font-weight:700;letter-spacing:-.01em;margin:0;white-space:nowrap}
+.brand .sub{font-family:var(--mono);font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.06em}
+.top .spacer{flex:1}
+.pulse{display:flex;align-items:center;gap:7px;font-family:var(--mono);font-size:11px;color:var(--muted);white-space:nowrap}
+.dotlive{width:8px;height:8px;border-radius:50%;background:var(--green);animation:pl 2.4s infinite}
+@keyframes pl{0%{box-shadow:0 0 0 0 color-mix(in srgb,var(--green) 55%,transparent)}70%{box-shadow:0 0 0 7px transparent}100%{box-shadow:0 0 0 0 transparent}}
+.iconbtn{width:34px;height:34px;flex:none;border-radius:8px;border:1px solid var(--border);background:var(--surface);color:var(--muted);cursor:pointer;display:grid;place-items:center}
+.iconbtn:hover{color:var(--text);border-color:var(--accent-line)}
+.iconbtn svg{width:16px;height:16px;stroke:currentColor;fill:none}
+.viewnav{display:flex;gap:4px;margin-top:18px;background:var(--surface);border:1px solid var(--border);border-radius:11px;padding:4px;overflow-x:auto;scrollbar-width:none}
+.viewnav::-webkit-scrollbar{display:none}
+.viewnav button{flex:1 0 auto;white-space:nowrap;border:none;background:none;color:var(--muted);font:inherit;font-size:13px;font-weight:600;padding:9px 12px;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:7px}
+.viewnav button svg{flex:none}
+.viewnav button.act{background:var(--accent-weak);color:var(--accent)}
+.viewnav .n{font-family:var(--mono);font-size:11px;opacity:.8}
+.libwrap{display:flex;flex-direction:column;gap:10px;margin-top:12px;padding-bottom:40px}
+.libitem summary{font-size:12.5px}
+.addbox .clr{border:none;background:var(--chip);color:var(--muted);cursor:pointer;font-size:11px;border-radius:6px;padding:3px 8px;font-family:var(--mono)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:18px}
+.tile{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.tile .k{font-family:var(--mono);font-size:10.5px;color:var(--faint);text-transform:uppercase;letter-spacing:.07em}
+.tile .v{font-size:24px;font-weight:700;letter-spacing:-.02em;font-variant-numeric:tabular-nums;margin-top:3px}
+.tile .v small{font-size:12px;color:var(--muted);font-weight:500}
+.tile .v.hit{color:var(--accent)}
+.panel{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:14px 16px;margin-top:10px}
+.panel h2{font-size:11px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.bars{display:flex;flex-direction:column;gap:8px}
+.bar{display:grid;grid-template-columns:130px 1fr 34px;align-items:center;gap:10px;cursor:pointer;border:none;background:none;padding:2px 0;font:inherit;color:inherit;text-align:left;width:100%}
+.bar .nm{font-size:12.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;display:flex;align-items:center;gap:6px}
+.bar .track{height:8px;border-radius:5px;background:var(--surface-2);overflow:hidden}
+.bar .fill{height:100%;border-radius:5px;background:var(--accent);opacity:.85}
+.bar .ct{font-family:var(--mono);font-size:12px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+.bar.on .nm{color:var(--accent)}
+.bar.on .fill{opacity:1}
+.gdot{width:8px;height:8px;border-radius:2px;flex:none}
+/* watchlist */
+.wl-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.seg{display:inline-flex;border:1px solid var(--border);border-radius:8px;overflow:hidden;font-family:var(--mono);font-size:11px}
+.seg button{border:none;background:var(--surface);color:var(--muted);padding:5px 11px;cursor:pointer;font:inherit}
+.seg button.act{background:var(--accent);color:#fff}
+:root[data-theme="dark"] .seg button.act,:root:not([data-theme="light"]) .seg button.act{color:#08131a}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .seg button.act{color:#fff}}
+.tgts{display:flex;gap:6px;flex-wrap:wrap;margin-top:12px}
+.tgt{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11.5px;background:var(--accent-weak);color:var(--accent);border:1px solid var(--accent-line);border-radius:7px;padding:3px 4px 3px 9px}
+.tgt button{border:none;background:none;color:inherit;cursor:pointer;opacity:.65;font-size:13px;line-height:1;padding:0 3px}
+.tgt button:hover{opacity:1}
+.addbox{display:flex;align-items:center;gap:8px;margin-top:10px;background:var(--surface-2);border:1px solid var(--border);border-radius:9px;padding:7px 11px}
+.addbox svg{width:15px;height:15px;stroke:var(--faint);fill:none;flex:none}
+.addbox input{flex:1;border:none;background:none;color:var(--text);font-family:var(--mono);font-size:12.5px;outline:none;min-width:0}
+.addbox input::placeholder{color:var(--faint)}
+.addbox .hint{font-family:var(--mono);font-size:10px;color:var(--faint);white-space:nowrap}
+.wl-foot{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:11px;font-size:12px;color:var(--muted)}
+.wl-foot b{color:var(--text);font-variant-numeric:tabular-nums}
+.linkbtn{border:none;background:none;color:var(--accent);cursor:pointer;font:inherit;font-size:11.5px;font-family:var(--mono);text-decoration:underline;text-underline-offset:2px;padding:0}
+.filterpill{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11.5px;background:var(--chip);border:1px solid var(--border);border-radius:20px;padding:4px 10px;cursor:pointer}
+.filterpill b{color:var(--text)}.filterpill .x{color:var(--faint)}
+/* list */
+.listhead{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:16px}
+.listhead .lh-title{font-family:var(--mono);font-size:11px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint)}
+.listhead .lh-title b{color:var(--text);font-variant-numeric:tabular-nums}
+.mlinks{display:flex;gap:8px;flex-wrap:wrap}
+.list{display:flex;flex-direction:column;gap:8px;margin-top:14px;padding-bottom:40px}
+.row{display:grid;grid-template-columns:96px 1fr auto;gap:14px;align-items:start;background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 15px;cursor:pointer;text-align:left;font:inherit;color:inherit;width:100%;transition:border-color .12s,transform .12s;border-left-width:1px}
+.row:hover{border-color:var(--accent-line);transform:translateY(-1px)}
+.row:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.row.hit{border-left:3px solid var(--accent);background:linear-gradient(90deg,var(--accent-weak),transparent 60%)}
+.when{font-family:var(--mono);font-size:11px;color:var(--muted);line-height:1.35}
+.when .rel{color:var(--text);font-weight:600;display:block;font-size:12px}
+.mid{min-width:0}
+.vic{font-size:15px;font-weight:600;letter-spacing:-.01em;word-break:break-word;line-height:1.3}
+.grpline{display:flex;align-items:center;gap:9px;margin-top:5px;flex-wrap:wrap}
+.grp{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:11px;color:var(--muted)}
+.onpill{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;border-radius:20px;padding:2px 8px;border:1px solid}
+.on-y{color:var(--green);border-color:color-mix(in srgb,var(--green) 35%,transparent);background:var(--green-weak)}
+.on-n{color:var(--faint);border-color:var(--border);background:var(--chip)}
+.on-u{color:var(--muted);border-color:var(--border);background:var(--chip)}
+.on-dot{width:6px;height:6px;border-radius:50%;background:currentColor}
+.desc{font-size:12.5px;color:var(--muted);margin-top:7px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+.chip{font-family:var(--mono);font-size:10.5px;letter-spacing:.02em;border-radius:6px;padding:2px 7px;border:1px solid transparent;white-space:nowrap}
+.c-red{background:var(--red-weak);color:var(--red);border-color:color-mix(in srgb,var(--red) 30%,transparent)}
+.c-amber{background:var(--amber-weak);color:var(--amber);border-color:color-mix(in srgb,var(--amber) 30%,transparent)}
+.c-green{background:var(--green-weak);color:var(--green);border-color:color-mix(in srgb,var(--green) 30%,transparent)}
+.c-acc{background:var(--accent-weak);color:var(--accent);border-color:var(--accent-line)}
+.c-mut{background:var(--chip);color:var(--muted);border-color:var(--border)}
+.c-hit{background:var(--accent);color:#fff;border-color:var(--accent);font-weight:600}
+:root[data-theme="dark"] .c-hit,:root:not([data-theme="light"]) .c-hit{color:#08131a}
+.chev{align-self:center;color:var(--faint)}.chev svg{width:18px;height:18px;stroke:currentColor;fill:none}
+.empty{text-align:center;padding:44px 16px;color:var(--muted)}
+.empty svg{width:34px;height:34px;stroke:var(--faint);fill:none;margin-bottom:10px}
+.empty .hint{font-size:12px;color:var(--faint);margin-top:6px}
+/* modal */
+.ov{position:fixed;inset:0;z-index:40;background:rgba(6,10,16,.55);backdrop-filter:blur(3px);display:flex;justify-content:center;align-items:flex-start;overflow-y:auto;padding:28px 14px}
+.modal{background:var(--surface);border:1px solid var(--border);border-radius:16px;box-shadow:var(--shadow);width:100%;max-width:640px;overflow:hidden}
+.mhead{display:flex;align-items:flex-start;gap:12px;padding:18px 20px 14px;border-bottom:1px solid var(--border)}
+.mhead .vt{flex:1;min-width:0}
+.mhead .vt h3{margin:0;font-size:19px;font-weight:700;letter-spacing:-.015em;word-break:break-word}
+.mbody{padding:16px 20px 20px;display:flex;flex-direction:column;gap:16px}
+.sec .lbl{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.08em;color:var(--faint);margin-bottom:7px}
+.fulldesc{font-size:13.5px;color:var(--text);white-space:pre-wrap;word-break:break-word;background:var(--surface-2);border:1px solid var(--border);border-radius:10px;padding:12px 13px;max-height:220px;overflow:auto}
+.shot{border:1px solid var(--border);border-radius:10px;overflow:hidden;background:var(--surface-2)}
+.shot img{display:block;width:100%;height:auto}
+.shotfall{padding:20px;text-align:center;color:var(--muted);font-size:12.5px}
+.kv{display:flex;flex-direction:column;gap:9px}
+.line{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+.line .tag{font-family:var(--mono);font-size:11px;color:var(--muted);min-width:82px}
+.mono{font-family:var(--mono);font-size:12px;word-break:break-all}
+.copy{border:1px solid var(--border);background:var(--surface-2);color:var(--muted);border-radius:6px;padding:3px 8px;font-family:var(--mono);font-size:10.5px;cursor:pointer;flex:none}
+.copy:hover{color:var(--accent);border-color:var(--accent-line)}
+.wallets{display:flex;flex-direction:column;gap:6px;max-height:170px;overflow:auto;border:1px solid var(--border);border-radius:10px;padding:9px;background:var(--surface-2)}
+.wrow{display:flex;align-items:center;gap:8px}
+.wrow .ix{font-family:var(--mono);font-size:10px;color:var(--faint);width:20px;flex:none}
+.wrow .ad{font-family:var(--mono);font-size:11.5px;word-break:break-all;flex:1}
+.mlink{display:inline-flex;align-items:center;gap:6px;font-family:var(--mono);font-size:12px;text-decoration:none;border:1px solid var(--accent-line);background:var(--accent-weak);color:var(--accent);border-radius:8px;padding:7px 11px}
+.mlink svg{width:13px;height:13px;stroke:currentColor;fill:none}
+.note{font-size:11.5px;color:var(--faint);line-height:1.5}
+/* analysis dropdown */
+.adet{border:1px solid var(--accent-line);border-radius:10px;background:var(--accent-weak);overflow:hidden}
+.adet>summary{cursor:pointer;list-style:none;padding:11px 13px;display:flex;align-items:center;gap:9px;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent)}
+.adet>summary::-webkit-details-marker{display:none}
+.adet>summary .caret{margin-left:auto;transition:transform .15s}
+.adet[open]>summary .caret{transform:rotate(90deg)}
+.adet .abody{padding:0 14px 13px;border-top:1px solid var(--accent-line)}
+.adet ul{margin:11px 0 0;padding-left:17px;display:flex;flex-direction:column;gap:7px}
+.adet li{font-size:12.5px;color:var(--text);line-height:1.45}
+.adet .rlinks{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.adet .rlink{font-family:var(--mono);font-size:11px;text-decoration:none;border:1px solid var(--accent-line);border-radius:7px;padding:5px 9px;color:var(--accent);display:inline-flex;align-items:center;gap:5px}
+.adet .rlink svg{width:11px;height:11px;stroke:currentColor;fill:none}
+.mdrender{margin-top:11px;max-height:420px;overflow:auto;background:var(--surface);border:1px solid var(--border);border-radius:9px;padding:13px 15px;font-size:13px;line-height:1.55;color:var(--text)}
+.mdrender>*:first-child{margin-top:0}
+.mdrender h1{font-size:16px;font-weight:700;letter-spacing:-.01em;margin:0 0 8px;padding-bottom:7px;border-bottom:1px solid var(--border)}
+.mdrender h2{font-size:13.5px;font-weight:700;color:var(--accent);margin:18px 0 7px;font-family:var(--mono);text-transform:uppercase;letter-spacing:.03em}
+.mdrender h3{font-size:13px;font-weight:600;margin:14px 0 6px}
+.mdrender p{margin:8px 0}
+.mdrender ul,.mdrender ol{margin:8px 0;padding-left:20px;display:flex;flex-direction:column;gap:5px}
+.mdrender li{line-height:1.5}
+.mdrender strong{font-weight:600}
+.mdrender code{font-family:var(--mono);font-size:11.5px;background:var(--surface-2);border:1px solid var(--border);border-radius:4px;padding:1px 5px;word-break:break-all}
+.mdrender pre{background:var(--surface-2);border:1px solid var(--border);border-radius:8px;padding:10px;overflow-x:auto}
+.mdrender pre code{border:none;background:none;padding:0}
+.mdrender table{border-collapse:collapse;width:100%;margin:10px 0;font-size:11.5px;display:block;overflow-x:auto}
+.mdrender th,.mdrender td{border:1px solid var(--border);padding:6px 9px;text-align:left;vertical-align:top}
+.mdrender th{background:var(--surface-2);font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.03em;color:var(--muted);white-space:nowrap}
+.mdrender tr:nth-child(even) td{background:var(--surface-2)}
+.mdrender a{color:var(--accent);word-break:break-all}
+.mdsrc{margin-top:11px}
+.aflat-h{display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:12px;font-weight:600;color:var(--accent)}
+.aflat-h svg{stroke:currentColor;fill:none;flex:none}
+.aflat .mdrender{margin-top:9px}
+.aflat .rlinks{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.aflat .rlink{font-family:var(--mono);font-size:11px;text-decoration:none;border:1px solid var(--accent-line);border-radius:7px;padding:5px 9px;color:var(--accent);display:inline-flex;align-items:center;gap:5px}
+.aflat .rlink svg{width:11px;height:11px;stroke:currentColor;fill:none}
+.awallets{margin-top:12px}
+.aw-h{font-family:var(--mono);font-size:10.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--red);margin-bottom:6px;display:flex;align-items:center;gap:6px}
+.aw-h svg{stroke:currentColor;fill:none;flex:none}
+.awallets .note b{color:var(--red)}
+.pcard{border:1px solid var(--border);border-radius:10px;background:var(--surface-2);padding:12px 14px}
+.pcard .meta{display:flex;gap:16px;flex-wrap:wrap;font-family:var(--mono);font-size:11px;color:var(--muted);margin-bottom:8px}
+.pcard .meta b{color:var(--text)}
+.pcard .sect{font-size:12.5px;color:var(--muted);margin-bottom:10px}
+.pcard .sect b{color:var(--text);font-weight:600}
+.pcard ul{margin:0;padding-left:17px;display:flex;flex-direction:column;gap:6px}
+.pcard li{font-size:12.5px;line-height:1.45}
+.pcard .tagline{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.05em;color:var(--faint);margin-top:11px;padding-top:9px;border-top:1px solid var(--border)}
+.pcard .plabel{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin:13px 0 5px}
+.pcard .meta .chip{padding:1px 7px}
+.foot{border-top:1px solid var(--border);margin-top:8px;padding:18px 0 34px;color:var(--faint);font-size:11.5px;line-height:1.6}
+.foot .mono{color:var(--muted)}
+@media (max-width:640px){
+  .stats{grid-template-columns:repeat(2,1fr)}
+  .row{grid-template-columns:74px 1fr;gap:11px}
+  .chev{display:none}
+  .bar{grid-template-columns:104px 1fr 30px}
+}
+/* intel views: generic table */
+.vt-wrap{margin-top:12px;border:1px solid var(--border);border-radius:12px;overflow:hidden;background:var(--surface)}
+.vt-scroll{overflow-x:auto}
+.vt-tbl{width:100%;border-collapse:collapse;font-size:12.5px}
+.vt-tbl th{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--faint);text-align:left;padding:9px 12px;background:var(--surface-2);border-bottom:1px solid var(--border);white-space:nowrap}
+.vt-tbl td{padding:9px 12px;border-bottom:1px solid var(--border);vertical-align:top}
+.vt-tbl tr:last-child td{border-bottom:none}
+.vt-tbl td .grp{white-space:nowrap}
+.cvechips{display:flex;gap:5px;flex-wrap:wrap}
+/* ransomware.live victim cards */
+.rlgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(290px,1fr));gap:10px;margin-top:12px}
+.rlcard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:13px 15px;display:flex;flex-direction:column;gap:8px;min-height:118px}
+.rlcard:hover{border-color:var(--accent-line)}
+.rc-top{display:flex;align-items:flex-start;gap:8px}
+.rc-vic{font-size:14.5px;font-weight:600;line-height:1.3;word-break:break-word;flex:1;min-width:0}
+.rc-flag{font-size:17px;line-height:1.2;flex:none}
+.rc-meta{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.rc-desc{font-size:12.5px;color:var(--muted);line-height:1.45;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.rc-foot{margin-top:auto;display:flex;flex-direction:column;gap:4px;padding-top:4px}
+.rc-when{font-family:var(--mono);font-size:10.5px;color:var(--faint)}
+.rc-warn{color:var(--amber)}
+.rc-dom{font-family:var(--mono);font-size:11px;color:var(--muted);word-break:break-all;display:flex;align-items:center;gap:5px}
+.rc-dom svg{width:11px;height:11px;stroke:var(--faint);fill:none;flex:none}
+/* vuln accordion (por actor) */
+.vgrp{background:var(--surface);border:1px solid var(--border);border-radius:11px;overflow:hidden}
+.vgrp>summary{cursor:pointer;list-style:none;padding:11px 13px;display:flex;align-items:center;gap:9px;font-size:13px;font-weight:600}
+.vgrp>summary::-webkit-details-marker{display:none}
+.vgrp>summary .cnt{font-family:var(--mono);font-size:11px;color:var(--muted);font-weight:400}
+.vgrp>summary .caret{margin-left:auto;transition:transform .15s;width:14px;height:14px;stroke:var(--faint);fill:none}
+.vgrp[open]>summary .caret{transform:rotate(90deg)}
+.vgrp[open]>summary{border-bottom:1px solid var(--border)}
+/* ransom notes */
+.notecard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
+.notecard .nc-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:8px}
+.notecard .nc-file{font-family:var(--mono);font-size:11px;color:var(--muted);background:var(--surface-2);border:1px solid var(--border);border-radius:6px;padding:2px 7px;word-break:break-all}
+.notecard .nc-body{font-size:13px;color:var(--text);line-height:1.55;background:var(--surface-2);border:1px solid var(--border);border-left:3px solid var(--red);border-radius:8px;padding:10px 12px}
+/* raas */
+.raasrow{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;flex-direction:column;gap:9px;align-items:flex-start}
+.raasrow .rr-main{display:flex;align-items:center;gap:9px;flex-wrap:wrap}
+/* modal cve block */
+.cvelist{display:flex;flex-direction:column;gap:7px;border:1px solid var(--border);border-radius:10px;padding:10px;background:var(--surface-2);max-height:230px;overflow:auto}
+.cverow{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.cverow .cveid{font-weight:600;white-space:nowrap;flex:none;text-decoration:none}
+.cverow .cveid:hover{text-decoration:underline}
+.cverow .cveprod{font-size:12px;color:var(--muted)}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+
+<div id="root"></div>
+
+<script type="application/json" id="rl-data">
+{
+"generated": "",
+"source": "RansomLook (ransomlook.io) API",
+"window": "",
+"incidents": [],
+"groups": {},
+"analyses": {},
+"library": [],
+"default_targets": [
+"congreso.es",
+"senado.es",
+"ceuta.es",
+"melilla.es",
+"gob.es",
+"ayuntamiento",
+"diputacion",
+"generalitat",
+"junta",
+"ministerio",
+"universidad",
+"sanidad",
+"hospital"
+],
+"crypto_stats": {
+"addresses": 0,
+"transactions": 0,
+"groups": 0,
+"chains": {
+"bitcoin": {
+"addresses": 0,
+"transactions": 0
+},
+"ethereum": {
+"addresses": 0,
+"transactions": 0
+},
+"monero": {
+"addresses": 0,
+"transactions": 0
+}
+}
+},
+"crypto_recent": [],
+"notes": [],
+"torrents": [],
+"raas": [],
+"vulns": []
+}
+</script>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.2/marked.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.26.4/babel.min.js"></script>
+<script type="text/babel" data-presets="react">
+const {useState,useMemo,useEffect}=React;
+const DB=JSON.parse(document.getElementById('rl-data').textContent);
+const PALETTE=['#4bc6e8','#e2a53c','#ff5d72','#47c97a','#b98cff','#4b9bff','#ff9d5c','#e05c9e','#5ad1c0','#c0d152','#8a9bb0','#d67c7c'];
+const GROUPS=Object.keys(DB.groups).sort();
+const gcolor={};GROUPS.forEach((g,i)=>gcolor[g]=PALETTE[i%PALETTE.length]);
+const norm=s=>(s||'').toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+
+function relTime(d){const t=new Date(d.replace(' ','T')+'Z').getTime();const s=(Date.now()-t)/1000;
+  if(s<3600)return 'hace '+Math.max(1,Math.round(s/60))+' min';
+  if(s<86400)return 'hace '+Math.round(s/3600)+' h';return 'hace '+Math.round(s/86400)+' d';}
+const shotURL=s=>'https://www.ransomlook.io/'+encodeURI(s);
+const groupURL=g=>'https://www.ransomlook.io/group/'+encodeURIComponent(g);
+const load=(k,def)=>{try{const v=localStorage.getItem(k);return v===null?def:v;}catch(e){return def;}};
+const save=(k,v)=>{try{localStorage.setItem(k,v);}catch(e){}};
+const norm2=s=>(s||'').toLowerCase().replace(/[^a-z0-9]/g,'');
+const cvesFor=g=>{const n=norm2(g);return DB.vulns?DB.vulns.filter(v=>v.groups.some(x=>norm2(x)===n)):[];};
+const flag=cc=>(cc&&cc.length===2)?cc.replace(/./g,c=>String.fromCodePoint(127397+c.charCodeAt(0))):'';
+const FEED=new Set(Object.keys(DB.groups).map(norm2));
+const TABS=[
+  {id:'feed',label:'Incidentes',icon:'feed',n:DB.incidents.length},
+  {id:'lib',label:'Analisis',icon:'lib',n:DB.library.length},
+  {id:'crypto',label:'Cripto',icon:'crypto',n:DB.crypto_stats?DB.crypto_stats.groups:0},
+  {id:'notes',label:'Notas',icon:'notes',n:DB.notes?DB.notes.length:0},
+  {id:'raas',label:'RaaS',icon:'raas',n:DB.raas?DB.raas.length:0},
+  {id:'torrents',label:'Torrents',icon:'torrent',n:DB.torrents?DB.torrents.length:0},
+  {id:'vulns',label:'CVEs',icon:'cve',n:DB.vulns?DB.vulns.length:0},
+];
+
+function flagsFor(it){
+  const d=norm(it.description);const f=[];
+  if(/\bwe demand\b|\bransom\b|publicly posted|will be publicly|publication scheduled|\$\s?\d|\bmillion\b|we will upload|otherwise your data/.test(d)) f.push({t:'Extorsion',c:'c-red'});
+  if(/published/.test(d)) f.push({t:'Datos publicados',c:'c-amber'});
+  const dl=(it.description||'').match(/Deadline:\s*([0-9-]{8,10})|Publication scheduled:\s*([0-9-]{8,10})/i);
+  if(dl) f.push({t:'Plazo '+(dl[1]||dl[2]),c:'c-amber'});
+  const cm=(it.description||'').match(/country:\s*([A-Za-z]+)/i);
+  if(cm) f.push({t:'pais: '+cm[1],c:'c-mut'});
+  if(it.screen) f.push({t:'Captura',c:'c-acc'});
+  const g=DB.groups[it.group];
+  if(g&&g.wallets.length) f.push({t:g.wallets.length+' wallets',c:'c-green'});
+  const an=DB.analyses[it.group];
+  if(an) f.push({t:an.kind==='lab'?'analisis lab':'CTI report',c:'c-acc'});
+  if(it.activity) f.push({t:it.activity,c:'c-mut'});
+  if(it.src&&it.src.indexOf('rwl')>=0) f.push({t:it.src.indexOf('rl')<0?'solo ransomware.live':'ransomware.live',c:'c-acc'});
+  return f.slice(0,7);
+}
+function useCopy(){const [k,setK]=useState(null);
+  const fb=(t,d)=>{const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();try{document.execCommand('copy');}catch(e){}document.body.removeChild(a);d();};
+  const copy=(t,id)=>{const d=()=>{setK(id);setTimeout(()=>setK(null),1200);};try{navigator.clipboard.writeText(t).then(d,()=>fb(t,d));}catch(e){fb(t,d);}};
+  return [k,copy];}
+function Gdot({g,size=8}){return <span className="gdot" style={{width:size,height:size,background:gcolor[g]||'var(--faint)'}}/>;}
+function OnPill({g}){const o=DB.groups[g]?DB.groups[g].online:null;
+  if(o===true)return <span className="onpill on-y"><span className="on-dot"/>online</span>;
+  if(o===false)return <span className="onpill on-n"><span className="on-dot"/>offline</span>;
+  return <span className="onpill on-u"><span className="on-dot"/>s/d</span>;}
+
+function Bars({rows,active,onPick}){const max=rows[0]?rows[0][1]:1;
+  return (<div className="panel"><h2>Actividad por actor &middot; ultimos {DB.incidents.length} incidentes</h2>
+    <div className="bars">{rows.map(([g,n])=>(
+      <button key={g} className={"bar"+(active===g?" on":"")} onClick={()=>onPick(g)} title={active===g?"Quitar filtro":"Filtrar por "+g}>
+        <span className="nm"><Gdot g={g}/>{g}</span>
+        <span className="track"><span className="fill" style={{width:(n/max*100)+'%',background:active===g?gcolor[g]:'var(--accent)'}}/></span>
+        <span className="ct">{n}</span>
+      </button>))}</div></div>);
+}
+function Shot({it}){const [err,setErr]=useState(false);
+  if(!it.screen)return <div className="shotfall">Sin captura en la fuente para este registro.</div>;
+  if(err)return <div className="shotfall">La captura no se pudo cargar aqui.<br/><a href={shotURL(it.screen)} target="_blank" rel="noopener noreferrer">Abrir evidencia en RansomLook &#8599;</a></div>;
+  return <div className="shot"><img src={shotURL(it.screen)} alt={"Captura de "+it.victim} loading="lazy" referrerPolicy="no-referrer" onError={()=>setErr(true)}/></div>;}
+
+function ActorWallets({group}){const [k,copy]=useCopy();const g=DB.groups[group];
+  if(!g||!g.wallets||!g.wallets.length)return null;
+  return (<div className="awallets">
+    <div className="aw-h"><svg viewBox="0 0 24 24" width="12" height="12" strokeWidth="2" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20M16 13h.02"/></svg>Wallets del actor &middot; BTC &middot; extorsion ({g.wallets.length})</div>
+    <div className="wallets">{g.wallets.map((w,i)=><div className="wrow" key={i}>
+        <span className="ix">{String(i+1).padStart(2,'0')}</span><span className="ad">{w.address}</span>
+        <button className="copy" onClick={()=>copy(w.address,'aw'+i)}>{k==='aw'+i?'ok':'copiar'}</button></div>)}</div>
+    <div className="note"><b>Direcciones del grupo {group} para el cobro del rescate.</b> Son wallets del actor (los atacantes), NO de la victima ni del cliente. Cadena: bitcoin. Fuente: RansomLook.</div>
+  </div>);
+}
+function Analysis({group,flat}){const a=DB.analyses[group];if(!a)return null;
+  const html=useMemo(()=>{try{return window.marked?window.marked.parse(a.report_md):a.report_md;}catch(e){return '<pre>'+a.report_md+'</pre>';}},[group]);
+  const src=(<div className="rlinks mdsrc"><a className="rlink" href={a.source} target="_blank" rel="noopener noreferrer">
+      <svg viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 5h5v5M19 5l-9 9M11 5H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>fuente original</a></div>);
+  if(flat) return (<div className="aflat">
+      <div className="aflat-h"><svg viewBox="0 0 24 24" width="13" height="13" strokeWidth="2" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg>{a.title}
+        {a.kind&&<span className="chip c-mut" style={{padding:'1px 6px',fontWeight:400}}>{a.kind==='lab'?'RansomLook':'OSINT'}</span>}</div>
+      <div className="mdrender" dangerouslySetInnerHTML={{__html:html}}/><ActorWallets group={group}/>{src}</div>);
+  return (<details className="adet"><summary>
+      <svg viewBox="0 0 24 24" width="14" height="14" strokeWidth="2" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+      {a.title}
+      {a.kind&&<span className="chip c-mut" style={{marginLeft:6,padding:'1px 6px',fontWeight:400}}>{a.kind==='lab'?'RansomLook':'OSINT'}</span>}
+      <svg className="caret" viewBox="0 0 24 24" width="14" height="14" strokeWidth="2" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+    </summary>
+    <div className="abody">
+      <div className="mdrender" dangerouslySetInnerHTML={{__html:html}}/><ActorWallets group={group}/>{src}
+    </div></details>);
+}
+function Profile({group}){const p=DB.profiles[group];if(!p)return null;
+  const cf={alta:'c-green',media:'c-amber',baja:'c-mut'}[p.confidence]||'c-mut';
+  return (<div className="pcard">
+    <div className="meta"><span>Desde: <b>{p.since}</b></span><span>Modelo: <b>{p.model}</b></span><span className={"chip "+cf}>confianza {p.confidence}</span></div>
+    {p.origin&&<div className="sect"><b>Atribucion / origen:</b> {p.origin}</div>}
+    <div className="sect"><b>Sectores objetivo:</b> {p.sectors}</div>
+    {p.campaigns&&p.campaigns.length>0&&<><div className="plabel">Campanas / hitos</div><ul>{p.campaigns.map((c,i)=><li key={i}>{c}</li>)}</ul></>}
+    <div className="plabel">TTPs</div>
+    <ul>{p.ttps.map((t,i)=><li key={i}>{t}</li>)}</ul>
+    <div className="tagline">Contexto CTI de fuentes publicas &middot; no es un analisis de laboratorio de RansomLook</div>
+  </div>);
+}
+
+function LibraryReport({e}){
+  const html=useMemo(()=>{try{return window.marked?window.marked.parse(e.report_md):e.report_md;}catch(err){return '<pre>'+e.report_md+'</pre>';}},[e.actor]);
+  return (<details className="adet libitem">
+    <summary>
+      <svg viewBox="0 0 24 24" width="14" height="14" strokeWidth="2" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h6"/></svg>
+      {e.title}
+      {e.in_feed&&<span className="chip c-acc" style={{marginLeft:6,padding:'1px 6px'}}>en tu feed</span>}
+      <svg className="caret" viewBox="0 0 24 24" width="14" height="14" strokeWidth="2" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+    </summary>
+    <div className="abody">
+      <div className="mdrender" dangerouslySetInnerHTML={{__html:html}}/>
+      <div className="rlinks mdsrc"><a className="rlink" href={e.source} target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 5h5v5M19 5l-9 9M11 5H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>fuente original</a></div>
+    </div>
+  </details>);
+}
+function LibraryView({q,setQ}){
+  const rows=DB.library.filter(e=>{const t=(e.actor+' '+e.title+' '+e.report_md).toLowerCase();return !q||t.includes(q.toLowerCase());});
+  return (<>
+    <div className="panel" style={{marginTop:14}}>
+      <div className="wl-head"><h2 style={{margin:0}}>Analisis tecnicos de RansomLook</h2></div>
+      <div className="addbox" style={{marginTop:12}}>
+        <svg viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input value={q} onChange={ev=>setQ(ev.target.value)} placeholder="Buscar en los reports: actor, TTP, hash, onion, YARA..." aria-label="Buscar en biblioteca"/>
+        {q&&<button className="clr" onClick={()=>setQ('')}>limpiar</button>}
+      </div>
+      <div className="wl-foot"><span><b>{rows.length}</b> de {DB.library.length} reports completos embebidos</span></div>
+    </div>
+    <div className="libwrap">
+      {rows.length===0&&<div className="empty"><div>Ningun report coincide con la busqueda.</div></div>}
+      {rows.map(e=><LibraryReport key={e.actor} e={e}/>)}
+    </div>
+  </>);
+}
+function Modal({it,onClose}){const [k,copy]=useCopy();
+  const g=DB.groups[it.group]||{mirrors:[],mirror_state:'unchecked',wallets:[],online:null};
+  useEffect(()=>{const h=e=>{if(e.key==='Escape')onClose();};window.addEventListener('keydown',h);return()=>window.removeEventListener('keydown',h);},[]);
+  return (<div className="ov" onClick={onClose}><div className="modal" onClick={e=>e.stopPropagation()}>
+    <div className="mhead"><div className="vt">
+        <div className="grpline" style={{marginBottom:6,marginTop:0}}><span className="grp"><Gdot g={it.group}/>{it.group}</span><OnPill g={it.group}/>
+          {it.country&&<span className="rc-flag" style={{fontSize:14}} title={it.country}>{flag(it.country)}</span>}
+          {it.activity&&<span className="chip c-mut">{it.activity}</span>}
+          <span className="mono" style={{color:'var(--faint)',fontSize:11}}>{it.date} UTC</span></div>
+        <h3>{it.victim}</h3></div>
+      <button className="iconbtn" onClick={onClose} aria-label="Cerrar"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div className="mbody">
+      <div className="chips">{flagsFor(it).map((f,i)=><span key={i} className={"chip "+f.c}>{f.t}</span>)}</div>
+      <div className="sec"><div className="lbl">Descripcion publicada por el actor</div>
+        <div className="fulldesc">{it.description?it.description:'(El actor no publico descripcion para esta victima.)'}</div></div>
+      <div className="sec"><div className="lbl">Evidencia &middot; captura</div><Shot it={it}/></div>
+      <div className="sec"><div className="lbl">Ficha del actor &middot; CTI Report</div>
+        {DB.analyses[it.group]?<Analysis group={it.group} flat/>
+         :<div className="note">Sin report disponible para este actor. Usa el enlace de abajo para su historial en RansomLook.</div>}</div>
+      {cvesFor(it.group).length>0&&<div className="sec"><div className="lbl">Vulnerabilidades explotadas (CVE) &middot; {cvesFor(it.group).length}</div>
+        <div className="cvelist">{cvesFor(it.group).map((v,i)=>(<div className="cverow" key={i}>
+          <a className="mono cveid" href={"https://nvd.nist.gov/vuln/detail/"+v.cve} target="_blank" rel="noopener noreferrer">{v.cve}</a>
+          <span className="cveprod">{v.product}</span></div>))}</div>
+        <div className="note" style={{marginTop:6}}>Fuente: ransomware.live/vulnerability. Explotacion atribuida u observada; no exhaustiva.</div></div>}
+      <div className="sec"><div className="lbl">Infraestructura del actor</div>
+        <div className="kv">
+          <div className="line"><span className="tag">Estado</span><OnPill g={it.group}/></div>
+          <div className="line"><span className="tag">Mirror .onion</span>
+            {g.mirrors.length?<><span className="mono" style={{flex:1}}>{g.mirrors[0]}</span>
+              <button className="copy" onClick={()=>copy(g.mirrors[0],'m')}>{k==='m'?'copiado':'copiar'}</button></>
+             :<span className="mono" style={{color:'var(--muted)'}}>{g.mirror_state==='checked'?'sin mirror activo ahora':'no consultado'}</span>}</div>
+          {g.mirrors.length>0&&<div className="note">Requiere navegador Tor. No abrir desde un equipo corporativo.</div>}
+        </div></div>
+      {!DB.analyses[it.group]&&<div className="sec"><div className="lbl">Wallets del actor &middot; extorsion</div>
+        {g.wallets.length?<div className="wallets">{g.wallets.map((w,i)=><div className="wrow" key={i}>
+            <span className="ix">{String(i+1).padStart(2,'0')}</span><span className="ad">{w.address}</span>
+            <button className="copy" onClick={()=>copy(w.address,'w'+i)}>{k==='w'+i?'ok':'copiar'}</button></div>)}
+          <div className="note" style={{marginTop:4}}>Wallets del grupo {it.group} para el cobro del rescate (no de la victima). Cadena: bitcoin. Fuente: RansomLook.</div></div>
+         :<div className="note">RansomLook no tiene wallets asociadas a este grupo.</div>}</div>}
+      <div className="sec"><div className="lbl">Fuentes de esta victima</div>
+        <div className="mlinks">
+          {it.src&&it.src.indexOf('rl')>=0&&<a className="mlink" href={groupURL(it.group)} target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24"><path d="M14 5h5v5M19 5l-9 9M11 5H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>Ficha del grupo en RansomLook</a>}
+          {it.rwl_url&&<a className="mlink" href={it.rwl_url} target="_blank" rel="noopener noreferrer">
+            <svg viewBox="0 0 24 24"><path d="M14 5h5v5M19 5l-9 9M11 5H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>Ver en ransomware.live</a>}
+        </div>
+        {it.src&&it.src.indexOf('rl')<0&&<div className="note" style={{marginTop:6}}>Victima presente solo en ransomware.live (no en el feed de RansomLook).</div>}</div>
+    </div></div></div>);
+}
+
+function Icon({name}){const p={
+  feed:<path d="M4 6h16M4 12h16M4 18h10"/>,
+  lib:<path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/>,
+  crypto:<><circle cx="12" cy="12" r="9"/><path d="M9.5 8.5H14a2 2 0 0 1 0 4H9.5H14a2 2 0 0 1 0 4H9.5M11.5 7v10"/></>,
+  notes:<><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M9 13h6M9 17h4"/></>,
+  raas:<><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M9 12l2 2 4-4"/></>,
+  torrent:<><path d="M12 4v16M12 20c0-5 4-8 8-8M12 13c0-4 3-6 6-6"/><circle cx="12" cy="3.4" r="1.6" fill="currentColor" stroke="none"/></>,
+  cve:<><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M12 9v4M12 16.2h.01"/></>,
+  rwlive:<><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.4"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/></>,
+};return <svg viewBox="0 0 24 24" width="15" height="15" strokeWidth="2" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">{p[name]}</svg>;}
+
+function CryptoView(){const [k,copy]=useCopy();const cs=DB.crypto_stats;const nf=n=>n.toLocaleString('es-ES');
+  return (<>
+    <div className="panel" style={{marginTop:14}}>
+      <div className="wl-head"><h2 style={{margin:0}}>Inteligencia de criptomonedas &middot; RansomLook</h2></div>
+      <section className="stats" style={{marginTop:12}}>
+        <div className="tile"><div className="k">Direcciones</div><div className="v">{nf(cs.addresses)}</div></div>
+        <div className="tile"><div className="k">Transacciones</div><div className="v">{nf(cs.transactions)}</div></div>
+        <div className="tile"><div className="k">Grupos con wallet</div><div className="v">{cs.groups}</div></div>
+        <div className="tile"><div className="k">Cadena dominante</div><div className="v" style={{fontSize:20}}>BTC</div></div>
+      </section>
+      <div className="note" style={{marginTop:11}}>Base de wallets de RansomLook (origen ransomwhe.re): {nf(cs.chains.bitcoin.addresses)} direcciones Bitcoin, {cs.chains.ethereum.addresses} Ethereum, {cs.chains.monero.addresses} Monero. Cifras agregadas de todos los actores rastreados.</div>
+    </div>
+    <div className="panel">
+      <h2>Transacciones recientes de alto valor</h2>
+      <div className="vt-wrap"><div className="vt-scroll"><table className="vt-tbl">
+        <thead><tr><th>Importe</th><th>Direccion destino</th><th>Fecha (UTC)</th><th></th></tr></thead>
+        <tbody>{DB.crypto_recent.map((t,i)=>(<tr key={i}>
+          <td style={{whiteSpace:'nowrap',fontFamily:'var(--mono)',fontWeight:600}}>{t.amount}</td>
+          <td className="mono" style={{maxWidth:300}}>{t.to}</td>
+          <td className="mono" style={{whiteSpace:'nowrap',color:'var(--muted)'}}>{t.time}</td>
+          <td><button className="copy" onClick={()=>copy(t.to,'c'+i)}>{k==='c'+i?'ok':'copiar'}</button></td>
+        </tr>))}</tbody>
+      </table></div></div>
+      <div className="note" style={{marginTop:10}}>Importes y destinos segun el rastreo de RansomLook. Verifica siempre en un explorador de cadena antes de citarlo en un informe.</div>
+    </div>
+  </>);
+}
+
+function NotesView(){const [q,setQ]=useState('');
+  const rows=DB.notes.filter(n=>{const t=(n.group+' '+n.title+' '+n.preview).toLowerCase();return !q||t.includes(q.toLowerCase());});
+  return (<>
+    <div className="panel" style={{marginTop:14}}>
+      <div className="wl-head"><h2 style={{margin:0}}>Notas de rescate &middot; muestras reales</h2></div>
+      <div className="addbox" style={{marginTop:12}}>
+        <svg viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar por actor, fichero o texto de la nota..." aria-label="Buscar notas"/>
+        {q&&<button className="clr" onClick={()=>setQ('')}>limpiar</button>}
+      </div>
+      <div className="wl-foot"><span><b>{rows.length}</b> de {DB.notes.length} notas &middot; texto resumido y saneado (sin IDs de victima ni .onion operativos)</span></div>
+    </div>
+    <div className="libwrap">
+      {rows.length===0&&<div className="empty"><div>Ninguna nota coincide con la busqueda.</div></div>}
+      {rows.map((n,i)=>(<div className="notecard" key={i}>
+        <div className="nc-head"><span className="grp"><Gdot g={n.group}/>{n.group}</span><span className="nc-file">{n.title}</span></div>
+        <div className="nc-body">{n.preview}</div>
+      </div>))}
+    </div>
+  </>);
+}
+
+function RaasReport({r}){
+  const html=useMemo(()=>{try{return window.marked?window.marked.parse(r.rules_md):r.rules_md;}catch(e){return '<pre>'+r.rules_md+'</pre>';}},[r.name]);
+  return (<details className="adet"><summary>
+      <svg viewBox="0 0 24 24" width="14" height="14" strokeWidth="2" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/></svg>
+      {r.name}{r.current&&<span className="chip c-green" style={{marginLeft:6,padding:'1px 6px'}}>activo</span>}
+      <svg className="caret" viewBox="0 0 24 24" width="14" height="14" strokeWidth="2" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6"/></svg>
+    </summary>
+    <div className="abody"><div className="mdrender" dangerouslySetInnerHTML={{__html:html}}/>
+      <div className="rlinks mdsrc"><a className="rlink" href={r.source} target="_blank" rel="noopener noreferrer">
+        <svg viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M14 5h5v5M19 5l-9 9M11 5H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>fuente original</a></div>
+    </div></details>);
+}
+function RaasView(){const nEmbed=DB.raas.filter(r=>r.rules_md).length;
+  return (<>
+    <div className="panel" style={{marginTop:14}}>
+      <div className="wl-head"><h2 style={{margin:0}}>Programas RaaS &middot; reglas de afiliado</h2></div>
+      <div className="wl-foot"><span>Reglamentos recogidos por RansomLook. Solo material descriptivo del programa, no operativo. <b>{nEmbed}</b> de {DB.raas.length} con texto embebido.</span></div>
+    </div>
+    <div className="libwrap">
+      {DB.raas.map((r,i)=> r.rules_md
+        ? <RaasReport key={i} r={r}/>
+        : (<div className="raasrow" key={i}>
+            <div className="rr-main"><span className="grp"><Gdot g={r.name}/>{r.name}</span>
+              {r.current?<span className="chip c-green">activo</span>:<span className="chip c-mut">inactivo</span>}</div>
+            <div className="note">Reglamento no embebido (no publicado o rechazado por seguridad en la extraccion). Consulta el historial del grupo en RansomLook.</div>
+            <a className="mlink" href={r.source} target="_blank" rel="noopener noreferrer">
+              <svg viewBox="0 0 24 24"><path d="M14 5h5v5M19 5l-9 9M11 5H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>ver en RansomLook</a>
+          </div>))}
+    </div>
+  </>);
+}
+
+function TorrentsView(){
+  return (<>
+    <div className="panel" style={{marginTop:14}}>
+      <div className="wl-head"><h2 style={{margin:0}}>Torrents activos &middot; distribucion de filtraciones</h2></div>
+      <div className="vt-wrap" style={{marginTop:12}}><div className="vt-scroll"><table className="vt-tbl">
+        <thead><tr><th>Dataset / victima</th><th>Actor</th><th>Infohash</th><th>Peers</th><th>Seeders</th></tr></thead>
+        <tbody>{DB.torrents.map((t,i)=>(<tr key={i}>
+          <td style={{fontWeight:600,wordBreak:'break-word'}}>{t.name}</td>
+          <td>{t.groups.map((g,j)=><span key={j} className="grp" style={{marginRight:6}}><Gdot g={g}/>{g}</span>)}</td>
+          <td className="mono">{t.infohash}</td>
+          <td className="mono">{t.peers}</td>
+          <td className="mono">{t.seeders}</td>
+        </tr>))}</tbody>
+      </table></div></div>
+      <div className="note" style={{marginTop:10}}>Enjambres BitTorrent vivos que sirven datos filtrados. Peers = nodos observados; seeders = fuentes con la copia completa. No se enlaza el magnet. Fuente: RansomLook torrent health.</div>
+    </div>
+  </>);
+}
+
+function VulnsView(){const [q,setQ]=useState('');const [mode,setMode]=useState('actor');
+  const ql=q.toLowerCase();
+  const byCve=DB.vulns.filter(v=>!q||(v.cve+' '+v.product+' '+v.groups.join(' ')).toLowerCase().includes(ql));
+  const byActor=useMemo(()=>{const m={};
+    DB.vulns.forEach(v=>v.groups.forEach(g=>{const key=norm2(g);
+      if(!m[key])m[key]={name:g,key,items:[]};
+      m[key].items.push({cve:v.cve,product:v.product});}));
+    return Object.values(m).sort((a,b)=>b.items.length-a.items.length||a.name.localeCompare(b.name));},[]);
+  const actorRows=byActor.map(a=>{
+    const items=a.items.filter(it=>!q||(a.name+' '+it.product+' '+it.cve).toLowerCase().includes(ql));
+    return {...a,items};}).filter(a=>a.items.length);
+  const cveL=q=>"https://nvd.nist.gov/vuln/detail/"+q;
+  return (<>
+    <div className="panel" style={{marginTop:14}}>
+      <div className="wl-head"><h2 style={{margin:0}}>CVE explotadas por actores de ransomware</h2>
+        <div className="seg"><button className={mode==='actor'?'act':''} onClick={()=>setMode('actor')}>Por actor</button><button className={mode==='cve'?'act':''} onClick={()=>setMode('cve')}>Por CVE</button></div>
+      </div>
+      <div className="addbox" style={{marginTop:12}}>
+        <svg viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar actor, aplicacion o CVE (qilin, Fortinet, 2024-55591)..." aria-label="Buscar"/>
+        {q&&<button className="clr" onClick={()=>setQ('')}>limpiar</button>}
+      </div>
+      <div className="wl-foot"><span>{mode==='actor'
+        ?<><b>{actorRows.length}</b> actores &middot; {DB.vulns.length} mapeos CVE&rarr;actor</>
+        :<><b>{byCve.length}</b> de {DB.vulns.length} CVE</>} &middot; fuente ransomware.live/vulnerability</span></div>
+    </div>
+
+    {mode==='actor'
+     ?<div className="libwrap">
+        {actorRows.length===0&&<div className="empty"><div>Ningun actor coincide con la busqueda.</div></div>}
+        {actorRows.map(a=>(<details className="vgrp" key={a.key} {...(q?{open:true}:{})}>
+          <summary><Gdot g={a.name}/>{a.name}<span className="cnt">{a.items.length} CVE</span>
+            {FEED.has(a.key)&&<span className="chip c-acc" style={{padding:'1px 6px'}}>en tu feed</span>}
+            <svg className="caret" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6"/></svg></summary>
+          <div className="vt-scroll"><table className="vt-tbl">
+            <thead><tr><th>Aplicacion afectada</th><th>CVE</th></tr></thead>
+            <tbody>{a.items.map((it,j)=>(<tr key={j}>
+              <td style={{minWidth:160}}>{it.product}</td>
+              <td><a className="mono" href={cveL(it.cve)} target="_blank" rel="noopener noreferrer" style={{fontWeight:600,whiteSpace:'nowrap',textDecoration:'none'}}>{it.cve}</a></td>
+            </tr>))}</tbody></table></div>
+        </details>))}
+      </div>
+     :<div className="vt-wrap"><div className="vt-scroll"><table className="vt-tbl">
+        <thead><tr><th>CVE</th><th>Aplicacion</th><th>Actores asociados</th></tr></thead>
+        <tbody>{byCve.length===0
+          ?<tr><td colSpan={3} style={{color:'var(--muted)',padding:'18px 12px'}}>Ningun CVE coincide con la busqueda.</td></tr>
+          :byCve.map((v,i)=>(<tr key={i}>
+            <td><a className="mono" href={cveL(v.cve)} target="_blank" rel="noopener noreferrer" style={{fontWeight:600,whiteSpace:'nowrap',textDecoration:'none'}}>{v.cve}</a></td>
+            <td style={{minWidth:150}}>{v.product}</td>
+            <td><div className="cvechips">{v.groups.map((g,j)=><span key={j} className={"chip "+(FEED.has(norm2(g))?"c-acc":"c-mut")}>{g}</span>)}</div></td>
+          </tr>))}</tbody>
+      </table></div></div>}
+    <div className="note" style={{margin:'12px 2px 40px'}}>Asociacion actor &rarr; aplicacion &rarr; CVE segun ransomware.live. El enlace abre el detalle en NVD. Los actores resaltados estan en tu feed. Una asociacion indica explotacion atribuida u observada, no que el grupo la use en todas sus campanas.</div>
+  </>);
+}
+
+function App(){
+  const [targets,setTargets]=useState(()=>{const s=load('rr_targets2',null);if(s){try{return JSON.parse(s);}catch(e){}}return DB.default_targets.slice();});
+  const [draft,setDraft]=useState('');
+  const [onlyHits,setOnlyHits]=useState(false);
+  const [active,setActive]=useState(null);
+  const [sel,setSel]=useState(null);
+  const [theme,setTheme]=useState(()=>load('rr_theme',''));
+  const [view,setView]=useState('feed');
+  const [libQ,setLibQ]=useState('');
+  const [win,setWin]=useState('all');
+  useEffect(()=>{save('rr_targets2',JSON.stringify(targets));},[targets]);
+  useEffect(()=>{const r=document.documentElement;if(theme)r.setAttribute('data-theme',theme);else r.removeAttribute('data-theme');save('rr_theme',theme);},[theme]);
+
+  const addTargets=str=>{const parts=str.split(',').map(s=>s.trim()).filter(Boolean);
+    if(!parts.length)return;setTargets(t=>[...new Set([...t,...parts.map(p=>p)])]);setDraft('');};
+  const removeTarget=x=>setTargets(t=>t.filter(v=>v!==x));
+  const nTargets=useMemo(()=>targets.map(norm).filter(Boolean),[targets]);
+
+  const groupCounts=useMemo(()=>{const m={};DB.incidents.forEach(it=>m[it.group]=(m[it.group]||0)+1);return Object.entries(m).sort((a,b)=>b[1]-a[1]);},[]);
+
+  const toT=d=>new Date((d||'').replace(' ','T')+'Z').getTime();
+  const maxT=useMemo(()=>DB.incidents.reduce((m,it)=>Math.max(m,toT(it.date)),0),[]);
+  const WD={'1':1,'3':3,'7':7};
+  const inWin=it=>win==='all'||toT(it.date)>=maxT-WD[win]*86400000;
+  const cntWin=d=>d==='all'?DB.incidents.length:DB.incidents.filter(it=>toT(it.date)>=maxT-WD[d]*86400000).length;
+  const WB=[['1','24 h'],['3','3 d'],['7','7 d'],['all','Todo']];
+
+  const rows=useMemo(()=>{
+    const out=DB.incidents.filter(inWin).map(it=>{
+      const hay=norm(it.victim+' '+it.group+' '+it.description+' '+(it.country||'')+' '+(it.activity||''));
+      const matched=nTargets.filter(t=>hay.includes(t));
+      // map matched normalized terms back to original for display
+      const disp=targets.filter(t=>matched.includes(norm(t)));
+      return {it,hit:matched.length>0,terms:disp};
+    }).filter(r=>!active||r.it.group===active)
+      .filter(r=>!onlyHits||r.hit);
+    // matches first, then chronological (already chronological input)
+    return out.sort((a,b)=>(b.hit?1:0)-(a.hit?1:0));
+  },[nTargets,targets,active,onlyHits,win]);
+
+  const totalHits=useMemo(()=>DB.incidents.filter(it=>{const hay=norm(it.victim+' '+it.group+' '+it.description+' '+(it.country||'')+' '+(it.activity||''));return nTargets.some(t=>hay.includes(t));}).length,[nTargets]);
+  const withMirror=useMemo(()=>new Set(Object.entries(DB.groups).filter(([g,v])=>v.online===true).map(([g])=>g)),[]);
+  const shotCount=DB.incidents.filter(i=>i.screen).length;
+  const onlineGroups=Object.values(DB.groups).filter(g=>g.online===true).length;
+
+  return (<>
+    <header className="top"><div className="wrap">
+      <div className="brand"><span className="logo"><svg viewBox="0 0 24 24" fill="none" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 12l6-3"/><circle cx="12" cy="12" r="2.4" fill="currentColor" stroke="none"/><path d="M12 3v3M21 12h-3"/></svg></span>
+        <div style={{minWidth:0}}><h1>Threat Advisory</h1><div className="sub">Avisador de amenazas &middot; feed en vivo</div></div></div>
+      <div className="spacer"></div>
+      <div className="pulse"><span className="dotlive"></span>{DB.incidents.length} incidentes</div>
+      <button className="iconbtn" onClick={()=>setTheme(theme==='dark'?'light':'dark')} aria-label="Cambiar tema"><svg viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 12.8A9 9 0 1 1 11.2 3 7 7 0 0 0 21 12.8z"/></svg></button>
+    </div></header>
+
+    <main className="wrap">
+      <nav className="viewnav">{TABS.map(t=>(
+        <button key={t.id} className={view===t.id?'act':''} onClick={()=>setView(t.id)}>
+          <Icon name={t.icon}/>{t.label} <span className="n">{t.n}</span></button>))}
+      </nav>
+
+      {view==='lib'&&<LibraryView q={libQ} setQ={setLibQ}/>}
+      {view==='crypto'&&<CryptoView/>}
+      {view==='notes'&&<NotesView/>}
+      {view==='raas'&&<RaasView/>}
+      {view==='torrents'&&<TorrentsView/>}
+      {view==='vulns'&&<VulnsView/>}
+
+      {view==='feed'&&<>
+      <section className="stats">
+        <div className="tile"><div className="k">Incidentes</div><div className="v">{DB.incidents.length}</div></div>
+        <div className="tile"><div className="k">Coinciden targets</div><div className={"v"+(totalHits?" hit":"")}>{totalHits}</div></div>
+        <div className="tile"><div className="k">Actores online</div><div className="v">{onlineGroups}<small> /{groupCounts.length}</small></div></div>
+        <div className="tile"><div className="k">Con captura</div><div className="v">{shotCount}<small> /{DB.incidents.length}</small></div></div>
+      </section>
+
+      <div className="panel">
+        <div className="wl-head">
+          <h2 style={{margin:0}}>Watchlist de targets</h2>
+          <div className="seg"><button className={onlyHits?"":"act"} onClick={()=>setOnlyHits(false)}>Todos</button><button className={onlyHits?"act":""} onClick={()=>setOnlyHits(true)}>Solo targets</button></div>
+        </div>
+        <div className="tgts">{targets.length===0&&<span className="note">Sin targets. Anade uno abajo.</span>}
+          {targets.map((t,i)=><span className="tgt" key={i}>{t}<button onClick={()=>removeTarget(t)} aria-label={"Quitar "+t}>&times;</button></span>)}</div>
+        <div className="addbox">
+          <svg viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round"><path d="M12 5v14M5 12h14"/></svg>
+          <input value={draft} onChange={e=>setDraft(e.target.value)} onKeyDown={e=>{if(e.key==='Enter'||e.key===',')  {e.preventDefault();addTargets(draft);}}} placeholder="Anadir target (dominio, palabra, actor) y Enter..." aria-label="Anadir target"/>
+          <span className="hint">Enter o coma</span>
+        </div>
+        <div className="wl-foot">
+          <span><b>{totalHits}</b> de {DB.incidents.length} coinciden con tus {targets.length} targets</span>
+          <button className="linkbtn" onClick={()=>setTargets(DB.default_targets.slice())}>restaurar sector publico ES</button>
+          {targets.length>0&&<button className="linkbtn" onClick={()=>setTargets([])}>vaciar</button>}
+          {active&&<button className="filterpill" onClick={()=>setActive(null)}><Gdot g={active} size={7}/><b>{active}</b><span className="x">&times;</span></button>}
+        </div>
+      </div>
+
+      <Bars rows={groupCounts.slice(0,7)} active={active} onPick={g=>setActive(active===g?null:g)}/>
+
+      <div className="listhead">
+        <span className="lh-title">Feed unificado &middot; <b>{rows.length}</b>{win!=='all'?' en ventana':' incidentes'}</span>
+        <div className="seg">{WB.map(([id,lb])=>(
+          <button key={id} className={win===id?'act':''} onClick={()=>setWin(id)} title={cntWin(id)+' incidentes'}>{lb}</button>))}</div>
+      </div>
+
+      <section className="list">
+        {rows.length===0&&<div className="empty">
+          <svg viewBox="0 0 24 24" strokeWidth="1.6"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+          <div>{onlyHits?"Ningun incidente coincide con tus targets en esta ventana.":"Sin incidentes para este filtro."}</div>
+          {onlyHits&&<div className="hint">Es un resultado real: en estas {DB.incidents.length} publicaciones no hay coincidencias. Cambia a "Todos" para ver el feed completo.</div>}
+        </div>}
+        {rows.map(({it,hit,terms},i)=>{const fl=flagsFor(it);
+          return (<button className={"row"+(hit?" hit":"")} key={i} onClick={()=>setSel(it)}>
+            <div className="when"><span className="rel">{relTime(it.date)}</span>{it.date.slice(5,16)}</div>
+            <div className="mid">
+              <div className="vic">{it.victim}</div>
+              <div className="grpline"><span className="grp"><Gdot g={it.group}/>{it.group}</span><OnPill g={it.group}/>
+                {it.country&&<span className="rc-flag" style={{fontSize:14}} title={it.country}>{flag(it.country)}</span>}</div>
+              {it.description&&<div className="desc">{it.description}</div>}
+              <div className="chips">
+                {hit&&terms.map((t,j)=><span key={"h"+j} className="chip c-hit">TARGET: {t}</span>)}
+                {fl.map((f,j)=><span key={j} className={"chip "+f.c}>{f.t}</span>)}
+              </div>
+            </div>
+            <span className="chev"><svg viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6"/></svg></span>
+          </button>);})}
+      </section>
+      </>}
+
+      <footer className="foot">
+        Feed de incidentes unificado y deduplicado de <span className="mono">ransomlook.io</span> + <span className="mono">ransomware.live</span> (las victimas presentes en ransomware.live enlazan a su ficha). Cripto, notas, RaaS y torrents de RansomLook; mapeo CVE&rarr;actor de ransomware.live &middot; instantanea del <span className="mono">{DB.generated}</span>.
+        La watchlist se guarda en este navegador. Estado online, wallets y analisis tecnicos segun RansomLook.
+        Los mirrors <span className="mono">.onion</span> requieren Tor y no deben abrirse desde equipos corporativos.
+      </footer>
+    </main>
+    {sel&&<Modal it={sel} onClose={()=>setSel(null)}/>}
+  </>);
+}
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
