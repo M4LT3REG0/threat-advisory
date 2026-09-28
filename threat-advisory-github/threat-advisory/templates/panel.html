@@ -258,6 +258,10 @@ a{color:var(--accent)}
 .vgrp>summary .caret{margin-left:auto;transition:transform .15s;width:14px;height:14px;stroke:var(--faint);fill:none}
 .vgrp[open]>summary .caret{transform:rotate(90deg)}
 .vgrp[open]>summary{border-bottom:1px solid var(--border)}
+.vgrp .adbody{padding:12px 14px}
+.ad-desc{font-size:12.5px;line-height:1.5;color:var(--text)}
+.ad-lbl{font-family:var(--mono);font-size:10px;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);margin:12px 0 6px}
+.ttchips{display:flex;gap:5px;flex-wrap:wrap}
 /* ransom notes */
 .notecard{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
 .notecard .nc-head{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:8px}
@@ -352,8 +356,10 @@ const cvesFor=g=>{const n=norm2(g);return DB.vulns?DB.vulns.filter(v=>v.groups.s
 const flag=cc=>(cc&&cc.length===2)?cc.replace(/./g,c=>String.fromCodePoint(127397+c.charCodeAt(0))):'';
 const cleanDom=d=>(d||'').replace(/^https?:\/\//,'').split(/[ \/]/)[0];
 const FEED=new Set(Object.keys(DB.groups).map(norm2));
+const ANALYSIS_SLUGS=new Set(Object.keys(DB.analyses||{}).map(norm2));
 const TABS=[
   {id:'feed',label:'Incidentes',icon:'feed',n:DB.incidents.length},
+  {id:'actors',label:'Actores',icon:'actors',n:DB.actors_dir?DB.actors_dir.length:0},
   {id:'lib',label:'Analisis',icon:'lib',n:DB.library.length},
   {id:'crypto',label:'Cripto',icon:'crypto',n:DB.crypto_stats?DB.crypto_stats.groups:0},
   {id:'notes',label:'Notas',icon:'notes',n:DB.notes?DB.notes.length:0},
@@ -563,6 +569,7 @@ function Icon({name}){const p={
   torrent:<><path d="M12 4v16M12 20c0-5 4-8 8-8M12 13c0-4 3-6 6-6"/><circle cx="12" cy="3.4" r="1.6" fill="currentColor" stroke="none"/></>,
   cve:<><path d="M12 2l8 4v6c0 5-3.5 8-8 10-4.5-2-8-5-8-10V6z"/><path d="M12 9v4M12 16.2h.01"/></>,
   rwlive:<><circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.4"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3"/></>,
+  actors:<><circle cx="9" cy="8" r="3.2"/><path d="M3.5 20a5.5 5.5 0 0 1 11 0"/><path d="M16 5.2a3.2 3.2 0 0 1 0 5.6M17.5 20a5.5 5.5 0 0 0-3-4.9"/></>,
 };return <svg viewBox="0 0 24 24" width="15" height="15" strokeWidth="2" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round">{p[name]}</svg>;}
 
 function CryptoView(){const [k,copy]=useCopy();const cs=DB.crypto_stats;const nf=n=>n.toLocaleString('es-ES');
@@ -722,6 +729,45 @@ function VulnsView(){const [q,setQ]=useState('');const [mode,setMode]=useState('
   </>);
 }
 
+function ActorsView(){const [q,setQ]=useState('');
+  const dir=DB.actors_dir||[];const ql=q.toLowerCase();
+  const vcount=slug=>(DB.actor_victims&&DB.actor_victims[slug])?DB.actor_victims[slug].length:0;
+  const rows=dir.filter(a=>!q||(a.name+' '+(a.description||'')+' '+(a.ttps||[]).map(t=>t.technique+' '+t.tactic).join(' ')).toLowerCase().includes(ql))
+    .slice().sort((a,b)=>vcount(b.slug)-vcount(a.slug)||a.name.localeCompare(b.name));
+  return (<>
+    <div className="panel" style={{marginTop:14}}>
+      <div className="wl-head"><h2 style={{margin:0}}>Directorio de actores &middot; ransomware.live</h2>
+        <span className="pulse"><span className="dotlive"></span>{dir.length} registrados</span></div>
+      <div className="addbox" style={{marginTop:12}}>
+        <svg viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg>
+        <input value={q} onChange={e=>setQ(e.target.value)} placeholder="Buscar actor, descripcion o TTP..." aria-label="Buscar actor"/>
+        {q&&<button className="clr" onClick={()=>setQ('')}>limpiar</button>}
+      </div>
+      <div className="wl-foot"><span><b>{rows.length}</b> de {dir.length} actores registrados &middot; {ANALYSIS_SLUGS.size} con ficha CTI propia</span></div>
+    </div>
+    <div className="libwrap">
+      {dir.length===0&&<div className="empty"><div>El directorio se rellena en el primer refresco del collector (en el despliegue).</div></div>}
+      {rows.map(a=>{const vc=vcount(a.slug);const rep=ANALYSIS_SLUGS.has(a.slug);
+        return (<details className="vgrp" key={a.slug} {...(q?{open:true}:{})}>
+          <summary><Gdot g={a.name}/>{a.name}
+            {vc>0&&<span className="cnt">{vc} victimas</span>}
+            {rep&&<span className="chip c-acc" style={{padding:'1px 6px'}}>ficha CTI</span>}
+            {a.onion&&<span className="chip c-green" style={{padding:'1px 6px'}}>onion activo</span>}
+            <svg className="caret" viewBox="0 0 24 24" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M9 6l6 6-6 6"/></svg></summary>
+          <div className="adbody">
+            {a.description?<div className="ad-desc">{a.description}</div>:<div className="note">Sin descripcion publicada en ransomware.live.</div>}
+            {a.ttps&&a.ttps.length>0&&<><div className="ad-lbl">TTPs ({a.ttps.length})</div>
+              <div className="ttchips">{a.ttps.map((t,i)=><span key={i} className="chip c-mut" title={t.tactic}>{t.technique||t.tactic}</span>)}</div></>}
+            {vc>0&&<div className="note" style={{marginTop:8}}>{vc} victimas registradas &middot; abre su ficha desde un incidente para el listado.</div>}
+            {rep&&<div className="note" style={{marginTop:6}}>Este actor tiene <b>ficha CTI propia</b>: abrela desde cualquiera de sus incidentes en el feed.</div>}
+            <a className="mlink" href={a.url} target="_blank" rel="noopener noreferrer" style={{marginTop:10}}>
+              <svg viewBox="0 0 24 24"><path d="M14 5h5v5M19 5l-9 9M11 5H7a2 2 0 0 0-2 2v10a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2v-4"/></svg>Perfil completo en ransomware.live</a>
+          </div>
+        </details>);})}
+    </div>
+  </>);
+}
+
 function App(){
   const [targets,setTargets]=useState(()=>{const s=load('rr_targets2',null);if(s){try{return JSON.parse(s);}catch(e){}}return DB.default_targets.slice();});
   const [draft,setDraft]=useState('');
@@ -782,6 +828,7 @@ function App(){
           <Icon name={t.icon}/>{t.label} <span className="n">{t.n}</span></button>))}
       </nav>
 
+      {view==='actors'&&<ActorsView/>}
       {view==='lib'&&<LibraryView q={libQ} setQ={setLibQ}/>}
       {view==='crypto'&&<CryptoView/>}
       {view==='notes'&&<NotesView/>}
